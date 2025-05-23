@@ -1,12 +1,13 @@
 import java.io.IOException; // IO异常
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files; // 文件操作
 import java.nio.file.Paths; // 路径操作
+import java.security.SecureRandom;
 import java.util.ArrayList; // 动态数组
 import java.util.Collections; // 排序
 import java.util.HashSet; // 哈希集合
 import java.util.List; // 列表
 import java.util.Map; // 映射
-import java.util.Random; // 随机数
 import java.util.Scanner; // 用户输入
 import java.util.Set; // 集合
 import java.util.StringJoiner; // 字符串拼接
@@ -18,20 +19,23 @@ public class Main { // 主类
 
   private static final Graph graph = new Graph(); // 图的实例
 
+  private static final SecureRandom secureRandom = new SecureRandom(); // 用于生成安全随机数
+
   /**
    * 主函数入口.
    *
    * @param args 命令行参数
    */
   public static void main(String[] args) { // 主函数入口
-    Scanner scanner = new Scanner(System.in); // 用于接收用户输入
+    Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8); // 用于接收用户输入
 
     System.out.println("软件工程实验一 - 图处理器"); // 欢迎信息
     System.out.print("请输入文本文件的路径: "); // 提示用户输入文件路径
     String filePath = scanner.nextLine(); // 读取文件路径
 
     try {
-      String content = new String(Files.readAllBytes(Paths.get(filePath))); // 读取文件所有字节并转为字符串
+      // 读取文件所有字节并转为字符串
+      String content = Files.readString(Paths.get(filePath), StandardCharsets.UTF_8);
       List<String> words = TextProcessor.cleanAndTokenize(content); // 清洗并切分文本为单词列表
 
       if (words.size() < 2) { // 如果单词数量不足以构成边
@@ -109,14 +113,17 @@ public class Main { // 主类
                 .sorted(
                     Map.Entry.<String, Double>comparingByValue().reversed()) // 按PR值降序排序
                 .forEach(
-                    entry -> System.out.printf("- %s: %.5f\n", entry.getKey(), entry.getValue()));
+                    entry -> System.out.printf("- %s: %.5f%n", entry.getKey(), entry.getValue()));
           }
           break;
         case 6:
           String randomWalkPath = randomWalk(graph); // 执行随机游走
           System.out.println("随机游走路径: " + randomWalkPath);
           try { // 将结果输出到文件
-            Files.write(Paths.get("random_walk_output.txt"), randomWalkPath.getBytes()); // 写入文件
+            Files.writeString(
+                Paths.get("random_walk_output.txt"),
+                randomWalkPath,
+                StandardCharsets.UTF_8); // 写入文件
             System.out.println("随机游走路径已保存到 random_walk_output.txt 文件。");
           } catch (IOException e) { // 捕获IO异常
             System.err.println("写入随机游走路径到文件时出错: " + e.getMessage());
@@ -224,7 +231,6 @@ public class Main { // 主类
     }
 
     StringBuilder newText = new StringBuilder(); // 用于构建新文本
-    Random random = new Random(); // 用于随机选择桥接词
 
     for (int i = 0; i < words.size(); i++) { // 遍历输入文本的单词
       newText.append(words.get(i)); // 添加当前单词
@@ -234,7 +240,7 @@ public class Main { // 主类
             graph.getBridgeWords(words.get(i).toLowerCase(), words.get(i + 1).toLowerCase());
         if (!bridges.isEmpty()) { // 如果存在桥接词
           // 随机选择一个桥接词插入
-          newText.append(" ").append(bridges.get(random.nextInt(bridges.size())));
+          newText.append(" ").append(bridges.get(secureRandom.nextInt(bridges.size())));
         }
         newText.append(" "); // 在原单词后（或桥接词后）加空格，准备下一个原单词
       }
@@ -299,8 +305,7 @@ public class Main { // 主类
       return "图中无节点，无法开始随机游走。";
     }
 
-    Random random = new Random(); // 用于随机选择
-    String currentNode = allNodesList.get(random.nextInt(allNodesList.size())); // 随机选择起始节点
+    String currentNode = allNodesList.get(secureRandom.nextInt(allNodesList.size())); // 随机选择起始节点
     StringBuilder pathBuilder = new StringBuilder(currentNode); // 用于构建游走路径字符串
     Set<String> visitedEdges = new HashSet<>(); // 用于记录访问过的边，格式为 "from->to"，以检测重复边
 
@@ -312,7 +317,7 @@ public class Main { // 主类
       }
       // 从出边中随机选择一条
       List<String> successorKeys = new ArrayList<>(successors.keySet());
-      String nextNode = successorKeys.get(random.nextInt(successorKeys.size()));
+      String nextNode = successorKeys.get(secureRandom.nextInt(successorKeys.size()));
       String edgeKey = currentNode + "->" + nextNode; // 当前边
 
       if (visitedEdges.contains(edgeKey)) { // 如果该边已被访问过

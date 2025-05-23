@@ -209,6 +209,23 @@ public class Graph { // 图类
     public int compareTo(NodeDistance other) {
       return Integer.compare(this.distance, other.distance);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true; // 自反性
+      }
+      if (obj == null || getClass() != obj.getClass()) {
+        return false; // 非同类对象
+      }
+      NodeDistance other = (NodeDistance) obj; // 强制转换
+      return distance == other.distance;
+    }
+
+    @Override
+    public int hashCode() {
+      return Integer.hashCode(distance); // 使用距离作为哈希码
+    }
   }
 
   /**
